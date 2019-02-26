@@ -1,7 +1,15 @@
 package com.doogie.entitypractice
 
+import com.doogie.entitypractice.model.Account
+import com.doogie.entitypractice.model.AccountSummary
+import com.doogie.entitypractice.model.AccountTransaction
 import com.doogie.entitypractice.model.Book
+import com.doogie.entitypractice.model.Client
+import com.doogie.entitypractice.model.Identifiable
 import com.doogie.entitypractice.model.Library
+import com.doogie.entitypractice.model.ProxiedBook
+import org.hibernate.SessionFactory
+import org.hibernate.testing.transaction.TransactionUtil.doInHibernate
 import org.hibernate.testing.transaction.TransactionUtil.doInJPA
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -12,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import javax.persistence.EntityManagerFactory
+
 
 @RunWith(SpringRunner::class)
 @SpringBootTest
@@ -46,10 +55,10 @@ class EntityPracticeApplicationTests {
     @Test
     fun mixedSessions() {
         val book1 = doInJPA<Book>({ this.entityManagerFactory }) { entityManager ->
-            return@doInJPA entityManager.find(Book::class.java, 1L)
+            entityManager.find(Book::class.java, 1L)
         }
         val book2 = doInJPA<Book>({ this.entityManagerFactory }) { entityManager ->
-            return@doInJPA entityManager.find(Book::class.java, 1L)
+            entityManager.find(Book::class.java, 1L)
         }
         assertFalse(book1 === book2)
 
@@ -130,5 +139,88 @@ class EntityPracticeApplicationTests {
         assertTrue(library.books.contains(book1))
         assertTrue(library.books.contains(book2))
 
+    }
+
+    @Test
+    fun findSubSelectEntity() {
+        doInJPA({ this.entityManagerFactory }) { entityManager ->
+            val client = Client().apply {
+                id = 1L
+                firstName = "John"
+                lastName = "Doe"
+            }
+            entityManager.persist(client)
+
+            val account = Account()
+            account.id = 1L
+            account.client = client
+            account.description = "Checking account"
+            entityManager.persist(account)
+
+            val transaction = AccountTransaction()
+            transaction.account = account
+            transaction.description = "Salary"
+            transaction.cents = 100 * 7000
+            entityManager.persist(transaction)
+
+            val summary = entityManager
+                .createQuery(
+                    """
+                    select s
+                    from AccountSummary s
+                    where s.id = :id
+                    """,
+                    AccountSummary::class.java
+                )
+                .setParameter("id", account.id)
+                .singleResult
+
+            assertEquals("John Doe", summary.clientName)
+            assertEquals(100 * 7000, summary.balance)
+        }
+
+        doInJPA({ this.entityManagerFactory }) { entityManager ->
+            val summary = entityManager.find(AccountSummary::class.java, 1L)
+            assertEquals("John Doe", summary.clientName)
+            assertEquals(100 * 7000, summary.balance)
+
+            val transaction = AccountTransaction()
+            transaction.account = entityManager.getReference(Account::class.java, 1L)
+            transaction.description = "Shopping"
+            transaction.cents = -100 * 2200
+            entityManager.persist(transaction)
+            entityManager.flush()
+
+            entityManager.refresh(summary)
+            assertEquals(100 * 4800, summary.balance)
+        }
+    }
+
+    @Test
+    fun customProxy() {
+        doInHibernate({ this.entityManagerFactory.unwrap(SessionFactory::class.java) }) { session ->
+            val book = ProxiedBook().apply {
+                id = 1L
+                title = "High-Performance Java Persistence"
+                author = "Vlad Mihalcea"
+            }
+            session.persist(book)
+            session.flush()
+        }
+
+        doInHibernate({ this.entityManagerFactory.unwrap(SessionFactory::class.java) }) { session ->
+//            val book = session.getReference(ProxiedBook::class.java, 1L)
+            val book = session.getReference(Identifiable::class.java, 1L)
+
+            assertTrue(
+                "Loaded entity is not an instance of the proxy interface",
+                book is Identifiable
+            )
+
+            assertFalse(
+                "Proxy class was not created",
+                book is ProxiedBook
+            )
+        }
     }
 }
