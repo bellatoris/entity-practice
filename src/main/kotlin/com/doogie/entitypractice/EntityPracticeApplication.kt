@@ -4,7 +4,7 @@ import com.doogie.differenet.DifferentPackageDoogie
 import com.doogie.differenet.DifferentPackageDoogieRepository
 import com.doogie.entitypractice.low.LowPackageDoogie
 import com.doogie.entitypractice.low.LowPackageDoogieRepository
-import com.doogie.entitypractice.model.Book
+import com.doogie.entitypractice.model.PersistBook
 import org.hibernate.testing.transaction.TransactionUtil.doInJPA
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.domain.EntityScan
@@ -46,11 +46,11 @@ fun main(args: Array<String>) {
 
 private fun testMapping(it: ConfigurableApplicationContext) {
     doInJPA({ it.beanFactory.getBean(EntityManagerFactory::class.java) }) { em ->
-        val book = Book()
+        val book = PersistBook()
         em.persist(book)
         em.flush()
-        val book1 = em.find(Book::class.java, 1L)
-        val book2 = em.find(Book::class.java, 1L)
+        val book1 = em.find(PersistBook::class.java, 1L)
+        val book2 = em.find(PersistBook::class.java, 1L)
         assert(book1 == book2)
     }
 }

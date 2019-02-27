@@ -20,6 +20,11 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import javax.persistence.EntityManagerFactory
+import com.doogie.entitypractice.model.Cuisine
+import com.doogie.entitypractice.model.Country
+import com.doogie.entitypractice.model.ProxyHelper
+import org.hibernate.testing.transaction.TransactionUtil.doInHibernateSessionBuilder
+//import org.hibernate.test.dynamicentity.tuplizer.EntityNameInterceptor
 
 
 @RunWith(SpringRunner::class)
@@ -222,5 +227,40 @@ class EntityPracticeApplicationTests {
                 book is ProxiedBook
             )
         }
+    }
+
+    @Test
+    fun dynamicProxy() {
+        val _cuisine = doInHibernateSessionBuilder<Cuisine>(
+            {
+                entityManagerFactory.unwrap(SessionFactory::class.java)
+                    .withOptions()
+                    .interceptor(EntityNameInterceptor())
+            },
+            { session ->
+                val cuisine = ProxyHelper.newProxy(Cuisine::class.java, null)
+                cuisine.name = "Française"
+
+                val country = ProxyHelper.newProxy(Country::class.java, null)
+                country.name = "France"
+
+                cuisine.country = country
+                session.persist(cuisine)
+
+                cuisine
+            })
+
+        doInHibernateSessionBuilder(
+            {
+                entityManagerFactory.unwrap(SessionFactory::class.java)
+                    .withOptions()
+                    .interceptor(EntityNameInterceptor())
+            },
+            { session ->
+                val cuisine = session.get(Cuisine::class.java, _cuisine.id)
+
+                assertEquals("Française", cuisine.name)
+                assertEquals("France", cuisine.country.name)
+            })
     }
 }
