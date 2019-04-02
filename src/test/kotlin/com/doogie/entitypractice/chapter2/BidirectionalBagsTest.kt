@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional
 
 @RunWith(SpringRunner::class)
 @SpringBootTest
-class BagsTest {
+class BidirectionalBagsTest {
     @Autowired
     lateinit var jpaContext: JpaContext
 
@@ -22,22 +22,22 @@ class BagsTest {
     @Transactional
     @Rollback(false)
     fun insert() {
-        val person = Person()
-        person.phones = person.phones.plus(Phone(null, "landline", "124"))
-        person.phones = person.phones.plus(Phone(null, "mobile", "124"))
-        getEntityManager(person::class.java).persist(person)
-        getEntityManager(person::class.java).flush()
+        val biPerson = BiPerson()
+        biPerson.addBiPhone(BiPhone(null, "landline", "124"))
+        biPerson.addBiPhone(BiPhone(null, "mobile", "124"))
+        getEntityManager(biPerson::class.java).persist(biPerson)
+        getEntityManager(biPerson::class.java).flush()
     }
 
     @Test
     @Transactional
     @Rollback(false)
     fun duplicate() {
-        val entityManager = getEntityManager(Person::class.java)
+        val entityManager = getEntityManager(BiPerson::class.java)
 
-        val person = entityManager.find(Person::class.java, 1L)
-        val phone = person.phones.first()
-        person.phones = person.phones.plus(phone)
+        val biPerson = entityManager.find(BiPerson::class.java, 1L)
+        val biPhone = biPerson.biPhones.first()
+        biPerson.addBiPhone(biPhone)
         entityManager.flush()
     }
 
@@ -45,11 +45,11 @@ class BagsTest {
     @Transactional
     @Rollback(false)
     fun delete() {
-        val entityManager = getEntityManager(Person::class.java)
+        val entityManager = getEntityManager(BiPerson::class.java)
 
-        val person = entityManager.find(Person::class.java, 1L)
-        val phone = entityManager.find(Phone::class.java, 1L)
-        person.phones = person.phones.minus(phone)
+        val biPerson = entityManager.find(BiPerson::class.java, 1L)
+        val biPhone = entityManager.find(BiPhone::class.java, 1L)
+        biPerson.removeBiPhone(biPhone)
         entityManager.flush()
     }
 }
