@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaContext
 import org.springframework.test.annotation.Rollback
 import org.springframework.test.context.junit4.SpringRunner
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 
 @RunWith(SpringRunner::class)
 @SpringBootTest
@@ -17,6 +18,18 @@ class BagsTest {
 
     fun <T> getEntityManager(clazz: Class<T>) =
         jpaContext.getEntityManagerByManagedType(clazz)
+
+    @Test
+    @Transactional
+    fun hi() {
+        val phone2 = Phone2()
+        getEntityManager(phone2::class.java).persist(phone2)
+        getEntityManager(phone2::class.java).flush()
+
+        val person2 = Person2(phone2, Instant.now())
+        getEntityManager(person2::class.java).persist(person2)
+        getEntityManager(person2::class.java).flush()
+    }
 
     @Test
     @Transactional

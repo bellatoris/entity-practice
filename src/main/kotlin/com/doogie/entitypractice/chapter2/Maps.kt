@@ -50,6 +50,7 @@ data class MappedPerson(
         name = "call_register",
         joinColumns = [JoinColumn(name = "person_id")]
     )
+
     @MapKeyColumn(name = "call_timestamp_epoch")
     @MapKeyClass(MobilePhone::class)
     @Column(name = "call_register")

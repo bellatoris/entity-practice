@@ -10,6 +10,6 @@ services:
       MYSQL_DATABASE: entity_practice
     volumes:
       - mysql-data:/var/lib/mysql
-      - /Users/Doogie/dg/mysql/mysql.conf.d/mysqld.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf
+      - /Users/doogiemin/dg/mysql/mysql.conf.d/mysqld.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf
 volumes:
   mysql-data:

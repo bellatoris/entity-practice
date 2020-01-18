@@ -28,6 +28,7 @@ class OrderedListsTest {
         getEntityManager(orderedPerson::class.java).persist(orderedPerson)
         getEntityManager(orderedPerson::class.java).flush()
     }
+
     @Test
     @Transactional
     @Rollback(false)

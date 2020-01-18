@@ -16,18 +16,18 @@ data class BiPerson(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
-    @OneToMany(cascade = [CascadeType.ALL], mappedBy = "biPerson")
-    var biPhones: List<BiPhone> = listOf()
+    @OneToMany(cascade = [CascadeType.ALL], mappedBy = "biPerson", orphanRemoval = true)
+    var biPhones: MutableList<BiPhone> = mutableListOf()
 ) {
     @Transient
     fun addBiPhone(biPhone: BiPhone) {
-        biPhones = biPhones.plus(biPhone)
+        biPhones.add(biPhone)
         biPhone.biPerson = this
     }
 
     @Transient
     fun removeBiPhone(biPhone: BiPhone) {
-        biPhones = biPhones.minus(biPhone)
+        biPhones.remove(biPhone)
         biPhone.biPerson = null
     }
 }

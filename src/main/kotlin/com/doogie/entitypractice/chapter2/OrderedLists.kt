@@ -18,9 +18,11 @@ data class OrderedPerson(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
+
     @OneToMany(cascade = [CascadeType.ALL])
     @OrderBy("number")
     var orderedPhones: List<OrderedPhone> = listOf(),
+
     @OneToMany(cascade = [CascadeType.ALL], mappedBy = "orderedPerson")
     @org.hibernate.annotations.OrderBy(
         clause = "CHAR_LENGTH(name) DESC"
@@ -33,7 +35,9 @@ data class OrderedPhone(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
+
     var type: String? = null,
+
     @Column(name = "number")
     var number: String? = null
 )
@@ -55,6 +59,7 @@ object OrderColumn {
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         var id: Long? = null,
+
         @OneToMany(cascade = [CascadeType.ALL], mappedBy = "orderedColumnPerson")
         @OrderColumn(name = "order_id")
         @get:ListIndexBase(100)
